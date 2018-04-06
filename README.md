@@ -9,8 +9,10 @@ indicate the amount of time that a user can be inactive prior to discounting a s
 file will be a log of all the sessions that occurred in the weblog file in time-sorted order.
 
 Inputs: inactivity_period.txt (Text file for inactivity period), log.csv(weblog file)
+
 Outputs: sessionization.txt (Text file describing all the sessions in the weblog)
 
 Dependencies required: Python 3.6 or higher
+
 Packages used are default packages included within the base python installation
 
