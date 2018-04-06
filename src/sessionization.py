@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[58]:
-
-
 import csv
 import time
 import os
@@ -37,6 +31,7 @@ ip_addresses = set()
 
 #Initializing time
 current_time = '00:00:00'
+t = time.time()
 
 #Opening main csv file 
 with open(filename, 'rt') as csvfile: 
@@ -65,14 +60,24 @@ with open(filename, 'rt') as csvfile:
         ip_addresses_toRemove = []
         #Starting analysis of whether data should be sessionized whenever whenever time increases
         if(not access_time==current_time):
-            #Looping through all the current ip addresses logged
+			#Looping through all the current ip addresses logged
             for ip_address in ip_addresses:
                 #Analyzing time between the last time this ip address made a request and the current time
                 last_activity_hr, last_activity_min, last_activity_sec = storage_dictionary[ip_address][-1][1].split(':')
                 current_hr, current_min, current_sec = access_time.split(':')
                 
-                last_activity_in_seconds = int(last_activity_hr)*3600 + int(last_activity_min)*60 + int(last_activity_sec)
-                current_activity_in_seconds = int(current_hr)*3600 + int(current_min*60) + int(current_sec)
+                try:
+                    last_activity_in_seconds = int(last_activity_hr)*3600 + int(last_activity_min)*60 + int(last_activity_sec)
+                except:
+                    last_activity_in_seconds = 0
+                    print("Time error detected: Defaulting to zero. Please ensure that time is in hh:mm:ss format")
+				
+                try:
+                    current_activity_in_seconds = int(current_hr)*3600 + int(current_min)*60 + int(current_sec)
+                except:
+                    current_activity_in_seconds = 0
+                    print("Time error detected: Defaulting to zero. Please ensure that time is in hh:mm:ss format")
+
                 activity_time = current_activity_in_seconds-last_activity_in_seconds
 
                 #When the time passed exceeds or equals the inactivity period, move the data to the sessionization list,
@@ -92,7 +97,7 @@ with open(filename, 'rt') as csvfile:
                     
                     #Calculating the time this ip spent in a session
                     start_hr, start_min, start_sec = start_time.split(':')
-                    start_time_in_seconds = int(start_hr)*3600 + int(start_min*60) + int(start_sec)
+                    start_time_in_seconds = int(start_hr)*3600 + int(start_min)*60 + int(start_sec)
                     
                     #Adding one because the session time is inclusive
                     session_time = last_activity_in_seconds - start_time_in_seconds + 1
@@ -104,7 +109,7 @@ with open(filename, 'rt') as csvfile:
                     #Adding to the sessionization list
                     session.append([ip_address,start_date,start_time,end_date,end_time,session_time,doc_number])
                     
-                    #Adding ip address for removal in the ip tracking set
+					#Adding ip address for removal in the ip tracking set
                     ip_addresses_toRemove.append(ip_address)
                     
                     #Removing all information for ip for the session above
@@ -116,7 +121,7 @@ with open(filename, 'rt') as csvfile:
         if(len(ip_addresses_toRemove)>0):
             for ip_address in ip_addresses_toRemove:
                 ip_addresses.discard(ip_address)
-        
+            
         #If new ip address detected in row, add the ip address to the ip address set
         if(not ip in ip_addresses):
             ip_addresses.add(ip)
@@ -139,12 +144,20 @@ for ip in storage_dictionary:
     #Obtaining end time of remaining ips
     end_time = storage_dictionary[ip][-1][1]
     last_activity_hr, last_activity_min, last_activity_sec = end_time.split(':')
-    last_activity_in_seconds = int(last_activity_hr)*3600 + int(last_activity_min)*60 + int(last_activity_sec)
-    
+    try:
+        last_activity_in_seconds = int(last_activity_hr)*3600 + int(last_activity_min)*60 + int(last_activity_sec)
+    except:
+        last_activity_in_seconds = 0
+        print("Time error detected: Defaulting to zero. Please ensure that time is in hh:mm:ss format")
+				    
     #Calculating session time using the first time ip address requested anything and the last time in the file 
     start_hr, start_min, start_sec = start_time.split(':')
-    start_time_in_seconds = int(start_hr)*3600 + int(start_min*60) + int(start_sec)
-    
+    try:
+        start_time_in_seconds = int(start_hr)*3600 + int(start_min)*60 + int(start_sec)
+    except:
+        start_time_in_seconds = 0
+        print("Time error detected: Defaulting to zero. Please ensure that time is in hh:mm:ss format")
+
     #Adding one because the session time is inclusive
     session_time = last_activity_in_seconds - start_time_in_seconds + 1
     
@@ -165,6 +178,5 @@ for sess in session:
     file.write("%s\n" % sess_string)
 file.close()
 
-#Changing directory back to src
-os.chdir('../src')
-
+elapsed_time = time.time()-t
+print("Finished separating out sessions, time elapsed:",elapsed_time,"s")
